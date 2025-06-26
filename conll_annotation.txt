@@ -2371,3 +2371,4 @@ bowl I-Product
 እናመሰግናለን O
 ቴሌግራም O
 ቻናል O
+!pip install transformers datasets seqeval!pip install transformers datasets seqeval!pip install transformers datasets seqeval!pip install transformers datasets seqeval
