@@ -235,10 +235,15 @@ print(scorecard[['Vendor', 'Avg. Views/Post', 'Posts/Week', 'Avg. Price (ETB)', 
 
 """
 Run NER inference on new Amharic messages using the best fine-tuned model.
+Includes: batch inference, entity extraction, and result saving for reproducibility and evaluation.
 """
 from transformers import pipeline, AutoTokenizer, AutoModelForTokenClassification
+import pandas as pd
+import os
 
 MODEL_PATH = './best-amharic-ner-model'  # Update if needed
+INPUT_FILE = 'processed_amharic_data.csv'  # Or your test data file
+OUTPUT_FILE = 'inference_results.csv'
 
 # Load model and tokenizer
 ner_pipe = pipeline('ner', model=MODEL_PATH, tokenizer=MODEL_PATH, aggregation_strategy="simple")
@@ -246,7 +251,30 @@ ner_pipe = pipeline('ner', model=MODEL_PATH, tokenizer=MODEL_PATH, aggregation_s
 def extract_entities(text):
     return ner_pipe(text)
 
+def batch_inference(input_file, output_file):
+    if not os.path.exists(input_file):
+        print(f"Input file {input_file} not found.")
+        return
+    df = pd.read_csv(input_file)
+    if 'processed_text' not in df.columns:
+        print("processed_text column not found in input file.")
+        return
+    results = []
+    for idx, row in df.iterrows():
+        entities = extract_entities(row['processed_text'])
+        results.append({
+            'original_text': row.get('Message Text', row['processed_text']),
+            'processed_text': row['processed_text'],
+            'entities': entities
+        })
+    out_df = pd.DataFrame(results)
+    out_df.to_csv(output_file, index=False)
+    print(f"Inference results saved to {output_file}")
+
 if __name__ == "__main__":
+    # Example: single sentence
     example = "የልጆች የመጠጥ ቦታ ዋጋ 1000 ብር"
     print(f"Entities in: {example}")
     print(extract_entities(example))
+    # Batch inference for evaluation and reproducibility
+    batch_inference(INPUT_FILE, OUTPUT_FILE)
